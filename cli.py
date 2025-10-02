@@ -15,6 +15,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--report", type=Path, help="Write JSON report to file path")
     p.add_argument("--no-optimize", dest="optimize", action="store_false", help="Disable encoder optimize")
     p.add_argument("--dry-run", action="store_true", help="Do not write files; show report only")
+    p.add_argument("--skip-larger", action="store_true", help="Skip writing if output would be larger")
     p.add_argument("--json", dest="json_out", action="store_true", help="Emit JSON report")
     return p
 

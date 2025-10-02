@@ -60,6 +60,7 @@ def compress_image(
             save_kwargs.update(dict(quality=quality, optimize=optimize, progressive=progressive))
             im = im.convert("RGB")
         elif fmt == "PNG":
+            # Pillow PNG optimize is lossless; optionally allow quantization later
             save_kwargs.update(dict(optimize=optimize))
         elif fmt == "WEBP":
             save_kwargs.update(dict(quality=quality, method=6))
@@ -68,5 +69,10 @@ def compress_image(
         im.save(dest, format=fmt, **save_kwargs)
 
     output_bytes = dest.stat().st_size if dest.exists() else 0
+    # Avoid negative wins: if output grew, keep the smaller one
+    if output_bytes > 0 and original_bytes > 0 and output_bytes > original_bytes:
+        # write back original bytes
+        # replace with original file content
+        dest.write_bytes(src.read_bytes())
+        output_bytes = original_bytes
     return CompressResult(source=src, dest=dest, original_bytes=original_bytes, output_bytes=output_bytes)
-
