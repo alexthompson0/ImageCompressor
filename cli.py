@@ -12,6 +12,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("-o", "--out", type=Path, help="Output path (file or directory)")
     p.add_argument("-q", "--quality", type=int, default=85, help="Quality for lossy formats")
     p.add_argument("--progressive", action="store_true", help="Write progressive JPEGs")
+    p.add_argument("--report", type=Path, help="Write JSON report to file path")
     p.add_argument("--no-optimize", dest="optimize", action="store_false", help="Disable encoder optimize")
     p.add_argument("--dry-run", action="store_true", help="Do not write files; show report only")
     p.add_argument("--json", dest="json_out", action="store_true", help="Emit JSON report")
@@ -52,8 +53,12 @@ def main(argv=None):
             r = compress_image(src, dest, quality=args.quality, optimize=args.optimize, progressive=args.progressive)
             results.append(dict(source=str(r.source), dest=str(r.dest), original_bytes=r.original_bytes, output_bytes=r.output_bytes))
 
+    payload = {"items": results, "total_saved": sum(max(i["original_bytes"]-i["output_bytes"], 0) for i in results)}
+    if args.report:
+        args.report.parent.mkdir(parents=True, exist_ok=True)
+        args.report.write_text(json.dumps(payload, indent=2))
     if args.json_out:
-        print(json.dumps({"items": results, "total_saved": sum(max(i["original_bytes"]-i["output_bytes"], 0) for i in results)}, indent=2))
+        print(json.dumps(payload, indent=2))
     else:
         total_saved = 0
         for i in results:
@@ -65,4 +70,3 @@ def main(argv=None):
 
 if __name__ == "__main__":
     main()
-
